@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Product Details</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="popup-body">
+  <div class="popup-wrapper">
+    <div class="product-container" id="product-detail">
+      <!-- Product will be rendered here -->
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    fetch(`http://localhost:5000/api/products/${productId}`)
+      .then(res => res.json())
+      .then(product => {
+        const container = document.getElementById('product-detail');
+        container.innerHTML = `
+          <div class="product-image">
+            <img src="${product.imageURL}" alt="${product.name}">
+          </div>
+          <div class="product-info">
+            <h1>${product.name}</h1>
+            <p>${product.description}</p>
+            <strong>$${product.price}</strong><br>
+            <span>Category: ${product.category}</span><br>
+            <button onclick="addToCart('${product._id}', '${product.name}', ${product.price})">Add to Cart</button>
+          </div>
+        `;
+      });
+
+    async function addToCart(id, name) {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login to add to cart!');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const res = await fetch('http://localhost:5000/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ productId: id, quantity: 1 }),
+      });
+
+      if (res.ok) {
+        alert(`${name} added to cart!`);
+      } else if (res.status === 401) {
+        alert('Please login again.');
+        window.location.href = 'login.html';
+      } else {
+        const err = await res.json();
+        alert('Error: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
+

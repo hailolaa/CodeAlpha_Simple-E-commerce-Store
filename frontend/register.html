@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-box">
+      <h2>Register</h2>
+      <form id="registerForm">
+        <input type="text" placeholder="Username" name="name" required>
+        <input type="email" placeholder="Email" name="email" required>
+        <input type="password" placeholder="Password" name="password" required>
+        <button type="submit" class="btn">Register</button>
+      </form>
+      <p class="auth-footer">Already have an account? <a href="login.html">Login</a></p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        password: formData.get('password')
+      };
+
+      const button = e.target.querySelector("button");
+      button.disabled = true;
+      button.textContent = "Registering...";
+
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: "include",
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        alert(result.message || (res.ok ? "Registered successfully!" : "Registration failed"));
+
+        if (res.ok) {
+          window.location.href = 'login.html';
+        }
+      } catch (err) {
+        alert("Something went wrong. Please try again.");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Register";
+      }
+    });
+  </script>
+</body>
+</html>

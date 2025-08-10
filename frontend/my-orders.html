@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Orders</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+   <header class="header">
+    <div class="logo">ALLMART</div>
+    <nav class="navbar">
+      <a href="index.html" class="nav-link ">Products</a>
+      <a href="cart.html" class="nav-link">Cart</a>
+      <a href="my-orders.html" class="nav-link active">Orders</a>
+  
+    </nav>
+  </header>
+  <h2>My Orders</h2>
+  <div id="order-list"></div>
+
+   <footer>
+    <P>jojo</P>
+
+  </footer>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+fetch('http://localhost:5000/api/orders/mine', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+})
+.then(res => {
+  if (res.status === 401) {
+    alert('Please log in to view orders');
+    window.location.href = 'login.html';
+    return;
+  }
+  return res.json();
+})
+.then(data => {
+  if (!data) return; // In case of redirect from 401
+
+  const container = document.getElementById('order-list');
+  if (!Array.isArray(data) || data.length === 0) {
+    container.innerHTML = "<p>No orders yet.</p>";
+    return;
+  }
+
+  data.forEach(order => {
+    const orderDiv = document.createElement("div");
+    orderDiv.innerHTML = `
+      <h3>Order ID: ${order._id}</h3>
+      <p><strong>Total:</strong> $${order.total}</p>
+      <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+      <ul>
+        ${order.items.map(item => `
+          <li>
+            ${item.quantity} × ${item.productId?.name || 'Unknown Product'}
+          </li>
+        `).join('')}
+      </ul>
+      <hr>
+    `;
+    container.appendChild(orderDiv);
+  });
+})
+.catch(err => {
+  console.error(err);
+  alert('Something went wrong');
+});
+
+  </script>
+  
+</body>
+</html>

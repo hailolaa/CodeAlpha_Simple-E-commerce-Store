@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Your Cart</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <script>
+    // Token check is handled in the main script below.
+  </script>
+</head>
+
+<body>
+  <header class="header">
+    <div class="logo">ALLMART</div>
+    <nav class="navbar">
+      <a href="index.html" class="nav-link ">Products</a>
+      <a href="cart.html" class="nav-link active">Cart</a>
+      <a href="my-orders.html" class="nav-link">Orders</a>
+  
+    </nav>
+  </header>
+
+  <h1>Your Cart</h1>
+  <div id="cart-items"></div>
+  <h2 id="total">Total: $0</h2>
+  <button onclick="checkout()">Checkout</button>
+
+  <footer>
+    <p>jojo</p>
+  </footer>
+
+  <script>
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please log in first.");
+      window.location.href = "login.html";
+    }
+
+    let total = 0;
+    const cartContainer = document.getElementById('cart-items');
+
+    fetch("http://localhost:5000/api/cart", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    })
+    .then(res => {
+      if (res.status === 401) {
+        alert("Unauthorized. Please log in again.");
+        window.location.href = "login.html";
+        return;
+      }
+      return res.json();
+    })
+    .then(cart => {
+      if (!cart || cart.length === 0) {
+        cartContainer.innerHTML = '<p>Your cart is empty.</p>';
+        return;
+      }
+
+      cart.forEach(item => {
+        const name = item?.product?.name || "Unknown";
+        const price = item?.product?.price || 0;
+        const quantity = item?.quantity || 0;
+        const subtotal = price * quantity;
+        total += subtotal;
+
+        const itemDiv = document.createElement('div');
+        itemDiv.innerHTML = `
+          <p>
+            <strong>${name}</strong> - $${price.toFixed(2)} × 
+            <input type="number" value="${quantity}" min="1" onchange="updateQuantity('${item._id}', this.value)">
+            = $${subtotal.toFixed(2)}
+            <button class="remove-btn" onclick="removeItem('${item._id}')">&times;</button>
+          </p>
+        `;
+        cartContainer.appendChild(itemDiv);
+      });
+
+      document.getElementById('total').innerText = `Total: $${total.toFixed(2)}`;
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Something went wrong while fetching your cart.");
+    });
+
+    function updateQuantity(cartItemId, quantity) {
+      if (quantity < 1) return;
+      fetch("http://localhost:5000/api/cart/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ cartItemId, quantity })
+      })
+      .then(() => location.reload())
+      .catch(err => console.error(err));
+    }
+
+    function removeItem(cartItemId) {
+      fetch(`http://localhost:5000/api/cart/${cartItemId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+      .then(() => location.reload())
+      .catch(err => console.error(err));
+    }
+
+    function checkout() {
+      if (total === 0) {
+        alert("Your cart is empty!");
+        return;
+      }
+
+      fetch("http://localhost:5000/api/cart", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+      .then(res => res.json())
+      .then(cart => {
+        const orderItems = cart.map(item => ({
+          productId: item.product._id,
+          quantity: item.quantity
+        }));
+
+        return fetch("http://localhost:5000/api/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            items: orderItems,
+            total
+          })
+        });
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to place order");
+        return res.json();
+      })
+      .then(() => {
+        return fetch("http://localhost:5000/api/cart", {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+      })
+      .then(() => {
+        alert("Order placed successfully!");
+        window.location.href = "index.html";
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Order failed: " + err.message);
+      });
+    }
+  </script>
+  
+</body>
+</html>

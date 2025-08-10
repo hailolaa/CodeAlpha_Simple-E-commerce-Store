@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-box">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <input type="email" placeholder="Email" name="email" required />
+        <input type="password" placeholder="Password" name="password" required />
+        <button type="submit" class="btn">Login</button>
+      </form>
+      <p class="auth-footer">Don't have an account? <a href="register.html">Register</a></p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = {
+        email: formData.get('email'),
+        password: formData.get('password')
+      };
+
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('token', result.token);
+        alert('Login successful!');
+        window.location.href = 'index.html';
+      } else {
+        alert(result.message);
+      }
+    });
+    
+   
+  </script>
+</body>
+</html>

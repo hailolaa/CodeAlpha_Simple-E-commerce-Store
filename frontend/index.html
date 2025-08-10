@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shop - Home</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">ALLMART</div>
+    <nav class="navbar">
+      <a href="index.html" class="nav-link active">Products</a>
+      <a href="cart.html" class="nav-link">Cart</a>
+      <a href="my-orders.html" class="nav-link">Orders</a>
+      <a href="#" id="authLink" class="nav-link">Login</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Our Products</h1>
+    <div id="product-list" class="product-list"></div>
+  </main>
+
+  <footer>
+    <p>jojo</p>
+  </footer>
+
+  <script>
+    fetch('http://localhost:5000/api/products')
+      .then(res => res.json())
+      .then(products => {
+        const container = document.getElementById('product-list');
+        products.forEach(p => {
+          const card = document.createElement('div');
+          card.classList.add('product-card');
+          card.innerHTML = `
+            <img src="${p.imageURL}" alt="${p.name}" />
+            <h2>${p.name}</h2>
+            <p class="product-description">${p.description}</p>
+            <strong class="product-price">$${p.price.toFixed(2)}</strong>
+            <span class="product-category">Category: ${p.category}</span>
+            <a href="product.html?id=${p._id}" onclick"openPopup(event)"class="details-link">View Details</a>
+          `;
+          container.appendChild(card);
+        });
+      });
+  </script>
+  <script>
+    const authLink = document.getElementById('authLink');
+    const token = localStorage.getItem('token');
+
+    if (token) {
+      authLink.textContent = 'Logout';
+      authLink.href = '#'; // prevent navigation
+
+      authLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('token');
+        alert('Logged out successfully!');
+        window.location.reload();  // reload page to update navbar and state
+      });
+    } else {
+      authLink.textContent = 'Login';
+      authLink.href = 'login.html';
+    }
+
+    function openPopup(event) {
+    event.preventDefault();
+    window.open("product.html", "ProductPopup", "width=420,height=600,top=100,left=100");
+  }
+
+  </script>
+</body>
+</html>
